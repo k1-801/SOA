@@ -5,7 +5,9 @@
 #include <QString>
 #include <QObject>
 
-#define FOR_EACH_TYPE(TEMPLATE,F)\
+#define FOR_EACH_TYPE(TEMPLATE,F) \
+if(tn.startsWith(#TEMPLATE)) \
+{ \
 	F(TEMPLATE, bool) \
 	F(TEMPLATE, int) \
 	F(TEMPLATE, uint) \
@@ -22,7 +24,9 @@
 	F(TEMPLATE, signed char) \
 	F(TEMPLATE, std::nullptr_t) \
 	F(TEMPLATE, QCborSimpleType) \
-	F(TEMPLATE, QString)
+	F(TEMPLATE, QString) \
+	{} \
+}
 
 class Input : public QObject
 {

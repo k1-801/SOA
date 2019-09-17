@@ -15,9 +15,11 @@ class json_test : public QObject
 		void input_json_test();
 		void input_json_prop_test();
 		void output_json_test();
+		void output_json_prop_test();
 		void input_xml_test();
 		void input_xml_prop_test();
 		void output_xml_test();
+		void output_xml_prop_test();
 		void solver_test();
 };
 
@@ -54,6 +56,18 @@ void json_test::output_json_test()
 
 }
 
+void json_test::output_json_prop_test()
+{
+	Output output;
+	output.setSumResult(30.30);
+	output.setMulResult(4);
+	output.setSorted({1, 1.01, 2.02, 4});
+	// NOTE: I used the Qt's standard library JSON which sorts the fields AND does NOT allow to select the presentation for float values, so I had to adapt the test string
+	//QCOMPARE(output.toJson(), "{\"SumResult\":30.30,\"MulResult\":4,\"SortedInputs\":[1.0,1.01,2.02,4.0]}");
+	QCOMPARE(Output::toJson(&output), "{\"MulResult\":4,\"SortedInputs\":[1,1.01,2.02,4],\"SumResult\":30.3}");
+
+}
+
 void json_test::input_xml_test()
 {
 	Input input;
@@ -80,6 +94,16 @@ void json_test::output_xml_test()
 	output.setSorted({1, 1.01, 2.02, 4});
 	//QCOMPARE(output.toXml(), "<Output><SumResult>30.30</SumResult><MulResult>4</MulResult><SortedInputs><decimal>1</decimal><decimal>1.01</decimal><decimal>2.02</decimal><decimal>4</decimal></SortedInputs></Output>");
 	QCOMPARE(output.toXml(), "<Output><SumResult>30.3</SumResult><MulResult>4</MulResult><SortedInputs><decimal>1</decimal><decimal>1.01</decimal><decimal>2.02</decimal><decimal>4</decimal></SortedInputs></Output>");
+}
+
+void json_test::output_xml_prop_test()
+{
+	Output output;
+	output.setSumResult(30.30);
+	output.setMulResult(4);
+	output.setSorted({1, 1.01, 2.02, 4});
+	//QCOMPARE(output.toXml(), "<Output><SumResult>30.30</SumResult><MulResult>4</MulResult><SortedInputs><decimal>1</decimal><decimal>1.01</decimal><decimal>2.02</decimal><decimal>4</decimal></SortedInputs></Output>");
+	QCOMPARE(Output::toXml(&output), "<Output><MulResult>4</MulResult><SortedInputs><decimal>1</decimal><decimal>1.01</decimal><decimal>2.02</decimal><decimal>4</decimal></SortedInputs><SumResult>30.3</SumResult></Output>");
 }
 
 void json_test::solver_test()

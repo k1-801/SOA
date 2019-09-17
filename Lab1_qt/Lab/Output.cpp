@@ -10,6 +10,8 @@
 #include <QList>
 #include <QLinkedList>
 #include <QMetaProperty>
+#include <QDebug>
+#include <string.h>
 
 void Output::solve(const Input& i)
 {
@@ -71,23 +73,21 @@ QByteArray Output::toJson()
 }
 
 #define TRY_CONVERTING_VECTOR(TEMPLATE,TYPE) \
-if(tn.startsWith(#TEMPLATE)) \
+if(tn == #TEMPLATE "<" #TYPE ">") /*if(metaproperty.type() == QVariant::fromValue(TEMPLATE<TYPE>()).type())*/ \
 { \
-	if(metaproperty.type() == QVariant::fromValue(TEMPLATE<TYPE>()).type()) \
-	{ \
-		QVariantList container; \
-		for(TYPE& val: value.value<TEMPLATE<TYPE>>()) container.push_back(QVariant::fromValue(val)); \
-		result[name] = QVariant::fromValue(container); \
-	} \
-}
-#define TRY_CONVERTING_MAP(T,TYPE) \
-if(metaproperty.type() == QVariant::fromValue(QMap<QString, TYPE>()).type()) \
+	QVariantList container; \
+	for(TYPE& val: value.value<TEMPLATE<TYPE>>()) container.push_back(QVariant::fromValue(val)); \
+	result[name] = QVariant::fromValue(container); \
+} else
+
+#define TRY_CONVERTING_MAP(TEMPLATE,TYPE) \
+if(tn == #TEMPLATE "<QString," #TYPE ">") /*if(metaproperty.type() == QVariant::fromValue(QMap<QString, TYPE>()).type())*/ \
 { \
 	QMap<QString, TYPE> map = value.value<QMap<QString, TYPE>>(); \
 	QVariantMap container; \
 	for(auto it = map.begin(); it != map.end(); ++it) container[it.key()] = QVariant::fromValue(it.value()); \
 	result[name] = QVariant::fromValue(container); \
-}
+} else
 
 QVariantMap Output::retrieveFields(const QObject* object)
 {
@@ -101,6 +101,7 @@ QVariantMap Output::retrieveFields(const QObject* object)
 	{
 		QMetaProperty metaproperty = metaobject->property(i);
 		const char* name = metaproperty.name();
+		if(!strcmp(name, "objectName")) continue;
 		QVariant value = object->property(name);
 		// First: every scalar type can be directly converted to QVariant, no problem
 		if(value.canConvert<QString>())
@@ -113,7 +114,7 @@ QVariantMap Output::retrieveFields(const QObject* object)
 			FOR_EACH_TYPE(QVector, TRY_CONVERTING_VECTOR)
 			FOR_EACH_TYPE(QList, TRY_CONVERTING_VECTOR)
 			FOR_EACH_TYPE(QLinkedList, TRY_CONVERTING_VECTOR)
-			FOR_EACH_TYPE(0, TRY_CONVERTING_MAP)
+			FOR_EACH_TYPE(QMap, TRY_CONVERTING_MAP)
 		}
 	}
 	return result;
@@ -164,7 +165,7 @@ QByteArray Output::toXml(const QObject* object)
 			}
 		}
 		// I am pretty sure all the other options are impossible
-		doc.appendChild(el);
+		root.appendChild(el);
 	}
 	QByteArray result = doc.toByteArray();
 	// Remove all space symbols
@@ -176,9 +177,9 @@ QByteArray Output::toXml(const QObject* object)
 QByteArray Output::toJson(const QObject* object)
 {
 	QJsonDocument doc;
-	QJsonObject root;
 	QVariantMap map = retrieveFields(object);
-	root.fromVariantMap(map);
+	QJsonObject root = QJsonObject::fromVariantMap(map);
+	doc.setObject(root);
 	QByteArray result = doc.toJson();
 	// Remove all space symbols
 	result.replace(" ", "");

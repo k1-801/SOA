@@ -12,7 +12,7 @@ class Output : public QObject
 {
 		Q_OBJECT
 		Q_PROPERTY(double SumResult READ sumResult WRITE setSumResult)
-		Q_PROPERTY(int MulResult READ sumResult WRITE setSumResult)
+		Q_PROPERTY(int MulResult READ mulResult WRITE setMulResult)
 		Q_PROPERTY(QVector<double> SortedInputs READ sorted WRITE setSorted)
 
 	private:

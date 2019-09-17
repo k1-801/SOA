@@ -58,23 +58,21 @@ void Input::fromJson(const QByteArray& in)
 }
 
 #define TRY_CONVERTING_VECTOR(TEMPLATE,TYPE) \
-if(tn.startsWith(#TEMPLATE)) \
+if(tn == #TEMPLATE "<" #TYPE ">") /*if(metaproperty.type() == QVariant::fromValue(TEMPLATE<TYPE>()).type())*/ \
 { \
-	if(metaproperty.type() == QVariant::fromValue(TEMPLATE<TYPE>()).type()) \
-	{ \
-		TEMPLATE<TYPE> container; \
-		for(QVariant val: value.toList()) container.push_back(val.value<TYPE>()); \
-		object->setProperty(name, QVariant::fromValue(container)); \
-	} \
-}
-#define TRY_CONVERTING_MAP(T,TYPE) \
-if(metaproperty.type() == QVariant::fromValue(QMap<QString, TYPE>()).type()) \
+	TEMPLATE<TYPE> container; \
+	for(QVariant val: value.toList()) container.push_back(val.value<TYPE>()); \
+	object->setProperty(name, QVariant::fromValue(container)); \
+} else
+
+#define TRY_CONVERTING_MAP(TEMPLATE,TYPE) \
+if(tn == #TEMPLATE "<QString," #TYPE ">") /*if(metaproperty.type() == QVariant::fromValue(QMap<QString, TYPE>()).type())*/ \
 { \
 	QMap<QString, TYPE> container; \
 	QVariantMap map = value.toMap(); \
 	for(auto it = map.begin(); it != map.end(); ++it) container[it.key()] = it.value().value<TYPE>(); \
 	object->setProperty(name, QVariant::fromValue(container)); \
-}
+} else
 
 
 void Input::fillFields(const QVariantMap& in, QObject* object)
@@ -93,11 +91,11 @@ void Input::fillFields(const QVariantMap& in, QObject* object)
 		}
 		else
 		{
+			QByteArray tn = metaproperty.typeName();
 			// Cannot convert directly: maps, vectors, lists
 			if(value.canConvert<QVariantList>())
 			{
 				// vectors, lists: iteratable structures
-				QByteArray tn = metaproperty.typeName();
 				// templates
 				FOR_EACH_TYPE(QVector, TRY_CONVERTING_VECTOR)
 				FOR_EACH_TYPE(QList, TRY_CONVERTING_VECTOR)
@@ -108,7 +106,7 @@ void Input::fillFields(const QVariantMap& in, QObject* object)
 			{
 				// Either a map or a custom class; I can't fill NESTED classes, but I can try to fill a map.
 				// Large TODO: this will take too long to finish
-				FOR_EACH_TYPE(0, TRY_CONVERTING_MAP)
+				FOR_EACH_TYPE(QMap, TRY_CONVERTING_MAP)
 			}
 		}
 	}
