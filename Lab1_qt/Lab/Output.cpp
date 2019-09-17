@@ -70,25 +70,6 @@ QByteArray Output::toJson()
 	return result;
 }
 
-#define FOR_EACH_TYPE(TEMPLATE,F)\
-	F(TEMPLATE, bool) \
-	F(TEMPLATE, int) \
-	F(TEMPLATE, uint) \
-	F(TEMPLATE, qlonglong) \
-	F(TEMPLATE, qulonglong) \
-	F(TEMPLATE, double) \
-	F(TEMPLATE, long) \
-	F(TEMPLATE, short) \
-	F(TEMPLATE, char) \
-	F(TEMPLATE, ulong) \
-	F(TEMPLATE, ushort) \
-	F(TEMPLATE, uchar) \
-	F(TEMPLATE, float) \
-	F(TEMPLATE, signed char) \
-	F(TEMPLATE, std::nullptr_t) \
-	F(TEMPLATE, QCborSimpleType) \
-	F(TEMPLATE, QString)
-
 #define TRY_CONVERTING_VECTOR(TEMPLATE,TYPE) \
 if(tn.startsWith(#TEMPLATE)) \
 { \
