@@ -18,7 +18,8 @@ using namespace std;
 // Normally defined in the project file, so no need to uncomment it here
 //#define DEBUG
 #define DEBUG_OUTPUT
-
+//сделайте так, чтобы вторая и третья лабы использовали код из первой лабы, отсюда дублирование уберите.
+//во второй лабе должен быть только код клиента, в третьей - только код сервера
 struct Input
 {
 	int k;
