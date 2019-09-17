@@ -5,6 +5,12 @@
 #include <QJsonArray>
 #include <QDomDocument>
 #include <QVariant>
+#include <QLinkedList>
+#include <QList>
+#include <QVector>
+#include <QVarLengthArray>
+
+#include <QMetaProperty>
 
 void Input::fromXml(const QByteArray& in)
 {
@@ -20,33 +26,150 @@ void Input::fromXml(const QByteArray& in)
 	if(knl.size() != 1 || snl.size() != 1 || mnl.size() != 1) return;
 
 	// Parse
-	k = QVariant(knl.at(0).firstChild().toText().data()).toInt();
+	_k = QVariant(knl.at(0).firstChild().toText().data()).toInt();
 	snl = snl.at(0).childNodes();
 	mnl = mnl.at(0).childNodes();
-	sums.resize(snl.size());
-	muls.resize(mnl.size());
+	_sums.resize(snl.size());
+	_muls.resize(mnl.size());
 	for(int i = 0; i < snl.size(); ++i)
 	{
-		sums[i] = QVariant(snl.at(i).firstChild().toText().data()).toDouble();
+		_sums[i] = QVariant(snl.at(i).firstChild().toText().data()).toDouble();
 	}
 	for(int i = 0; i < mnl.size(); ++i)
 	{
-		muls[i] = QVariant(mnl.at(i).firstChild().toText().data()).toDouble();
+		_muls[i] = QVariant(mnl.at(i).firstChild().toText().data()).toDouble();
 	}
 }
 
 void Input::fromJson(const QByteArray& in)
 {
-	sums.clear();
-	muls.clear();
+	_sums.clear();
+	_muls.clear();
 	QJsonDocument doc;
 	QJsonParseError er;
 	doc = QJsonDocument::fromJson(in, &er);
 	if(doc.isNull()) return; // Error
 	QJsonObject root = doc.object();
-	k = root["K"].toInt();
+	_k = root["K"].toInt();
 	QJsonArray jsums = root["Sums"].toArray();
 	QJsonArray jmuls = root["Muls"].toArray();
-	for(const QJsonValue& t: jsums) sums.push_back(t.toDouble());
-	for(const QJsonValue& t: jmuls) muls.push_back(t.toInt());
+	for(const QJsonValue t: jsums) _sums.push_back(t.toDouble());
+	for(const QJsonValue t: jmuls) _muls.push_back(t.toInt());
+}
+
+// use QT_FOR_EACH_STATIC_PRIMITIVE_TYPE(F(metatype, id, type))
+
+#define FOR_EACH_TYPE(TEMPLATE,F)\
+	F(TEMPLATE, bool) \
+	F(TEMPLATE, int) \
+	F(TEMPLATE, uint) \
+	F(TEMPLATE, qlonglong) \
+	F(TEMPLATE, qulonglong) \
+	F(TEMPLATE, double) \
+	F(TEMPLATE, long) \
+	F(TEMPLATE, short) \
+	F(TEMPLATE, char) \
+	F(TEMPLATE, ulong) \
+	F(TEMPLATE, ushort) \
+	F(TEMPLATE, uchar) \
+	F(TEMPLATE, float) \
+	F(TEMPLATE, signed char) \
+	F(TEMPLATE, std::nullptr_t) \
+	F(TEMPLATE, QCborSimpleType) \
+	F(TEMPLATE, QString)
+
+#define TRY_CONVERTING_VECTOR(TEMPLATE,TYPE) \
+if(tn.startsWith(#TEMPLATE)) \
+{ \
+	if(metaproperty.type() == QVariant::fromValue(TEMPLATE<TYPE>()).type()) \
+	{ \
+		TEMPLATE<TYPE> container; \
+		for(QVariant val: value.toList()) container.push_back(val.value<TYPE>()); \
+		object->setProperty(name, QVariant::fromValue(container)); \
+	} \
+}
+#define TRY_CONVERTING_MAP(T,TYPE) \
+if(metaproperty.type() == QVariant::fromValue(QMap<QString, TYPE>()).type()) \
+{ \
+	QMap<QString, TYPE> container; \
+	QVariantMap map = value.toMap(); \
+	for(auto it = map.begin(); it != map.end(); ++it) container[it.key()] = it.value().value<TYPE>(); \
+	object->setProperty(name, QVariant::fromValue(container)); \
+}
+
+
+void Input::fillFields(const QVariantMap& in, QObject* object)
+{
+	const QMetaObject *metaobject = object->metaObject();
+	int count = metaobject->propertyCount();
+	for (int i = 0; i < count; ++i)
+	{
+		QMetaProperty metaproperty = metaobject->property(i);
+		const char* name = metaproperty.name();
+		QVariant value = in.value(name);
+		QVariant target = object->property(name);
+		if(in.value(name).canConvert(metaproperty.type()))
+		{
+			object->setProperty(name, value);
+		}
+		else
+		{
+			// Cannot convert directly: maps, vectors, lists
+			if(value.canConvert<QVariantList>())
+			{
+				// vectors, lists: iteratable structures
+				QByteArray tn = metaproperty.typeName();
+				// templates
+				FOR_EACH_TYPE(QVector, TRY_CONVERTING_VECTOR)
+				FOR_EACH_TYPE(QList, TRY_CONVERTING_VECTOR)
+				FOR_EACH_TYPE(QLinkedList, TRY_CONVERTING_VECTOR)
+				//FOR_EACH_STATIC_PRIMITIVE_TYPE(QVarLengthArray, TRY_CONVERTING_VECTOR)
+			}
+			if(value.canConvert<QVariantMap>())
+			{
+				// Either a map or a custom class; I can't fill NESTED classes, but I can try to fill a map.
+				// Large TODO: this will take too long to finish
+				FOR_EACH_TYPE(0, TRY_CONVERTING_MAP)
+			}
+		}
+	}
+}
+
+void Input::fromXml(const QByteArray& in, QObject* object)
+{
+	// Note: this one will only fill the EXISTING QObject's properties
+	// It does not create extra properties for extraneous tags
+	// Also, if a tag is present more than once, only the first occasion will be processed
+	QDomDocument doc;
+	doc.setContent(in);
+	QDomElement root = doc.documentElement();
+	if(root.tagName() != "Input") return;
+	auto els1 = root.childNodes();
+
+	QVariantMap map;
+	for(int i = 0; i < els1.size(); ++i)
+	{
+		// First level children: class fields themselves
+		auto node1 = els1.at(i);
+		if(node1.isElement())
+		{
+			auto el1 = node1.toElement();
+			QVariant val;
+			QString tag1 = el1.tagName();
+
+			map[tag1] = val;
+		}
+	}
+	fillFields(map, object);
+}
+
+void Input::fromJson(const QByteArray& in, QObject* object)
+{
+	QJsonDocument doc;
+	QJsonParseError er;
+	doc = QJsonDocument::fromJson(in, &er);
+	if(doc.isNull()) return; // Error
+	QVariant var = doc.toVariant();
+	QJsonObject root = doc.object();
+	fillFields(root.toVariantMap(), object);
 }
