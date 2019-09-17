@@ -6,4 +6,5 @@ CONFIG -= app_bundle
 
 TEMPLATE = app
 
-SOURCES +=  tst_json_test.cpp
+SOURCES +=  \
+    tst_client_test.cpp

@@ -12,9 +12,6 @@
 
 #include <QMetaProperty>
 
-	//методы fromXml fromJson toXml toJson должны работать с любым типом объектов.
-	// если в плюсах нет вохможности понять какие поля и свойства етсь у объекта, сделайте объект-описание типа и передавайте его эти функции,
-	// чтобы методы могли рбаотать для любого типа, у которого есть объект-описание типа
 void Input::fromXml(const QByteArray& in)
 {
 	QDomDocument doc;
@@ -159,7 +156,55 @@ void Input::fromXml(const QByteArray& in, QObject* object)
 			auto el1 = node1.toElement();
 			QVariant val;
 			QString tag1 = el1.tagName();
+			auto els2 = el1.childNodes();
+			QVector<QPair<QString, QVariant>> subvals;
+			bool sameType = 1;
+			for(int j = 0; j < els2.size(); ++j)
+			{
+				auto node2 = els2.at(j);
+				if(node2.isText())
+				{
+					// Note: if there's more than ne text... I don't know what to do
+					val = node2.toText().data();
+				}
+				else if(node2.isElement())
+				{
+					auto el2 = node2.toElement();
+					// Pretty much HAS to contain text ONLY, otherwise the parser would hve to be recursive and I DON'T want to write that shit
+					QVariant subval;
+					auto els3 = el2.childNodes();
+					for(int k = 0; k < els3.size(); ++k)
+					{
+						auto node3 = els3.at(k);
+						if(node3.isText())
+						{
+							subval = node3.toText().data();
+						}
+					}
+					QString tag = el2.tagName();
+					if(subvals.size() && subvals.last().first != tag)
+						sameType = 0;
+					subvals.push_back(QPair<QString, QVariant>(tag, subval));
+				}
+			}
 
+			if(subvals.size())
+			{
+				if(sameType)
+				{
+					// List
+					QVariantList list;
+					for(auto nv: subvals) list.append(nv.second);
+					val = list;
+				}
+				else
+				{
+					// Map
+					QVariantMap map;
+					for(auto nv: subvals) map[nv.first] = nv.second;
+					val = map;
+				}
+			}
 			map[tag1] = val;
 		}
 	}

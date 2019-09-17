@@ -66,4 +66,4 @@ void json_test::cleanupTestCase()
 
 QTEST_APPLESS_MAIN(json_test)
 
-#include "tst_json_test.moc"
+#include "tst_client_test.moc"

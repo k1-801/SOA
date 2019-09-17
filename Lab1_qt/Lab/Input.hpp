@@ -18,6 +18,8 @@ class Input : public QObject
 		static void fillFields(const QVariantMap& in, QObject*);
 
 	public:
+		Input(){}
+		~Input(){}
 		void setK(int k){_k = k;}
 		void setSums(const QVector<double>& sums){_sums = sums;}
 		void setMuls(const QVector<int>& muls){_muls = muls;}

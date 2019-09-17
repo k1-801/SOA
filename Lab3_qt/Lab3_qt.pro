@@ -12,5 +12,5 @@ SOURCES += \
         main.cpp
 
 HEADERS += \
-    ../Lab1_qt/Lab/Input.hpp \
-    ../Lab1_qt/Lab/Output.hpp
+        ../Lab1_qt/Lab/Input.hpp \
+        ../Lab1_qt/Lab/Output.hpp

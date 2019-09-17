@@ -22,6 +22,8 @@ class Output : public QObject
 		static QVariantMap retrieveFields(const QObject*);
 
 	public:
+		Output(){}
+		~Output(){}
 		void setSumResult(double sumResult){_sumResult = sumResult;}
 		void setMulResult(int mulResult){_mulResult = mulResult;}
 		void setSorted(const QVector<double>& sorted){_sorted = sorted;}

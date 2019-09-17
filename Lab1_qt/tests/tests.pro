@@ -6,6 +6,11 @@ CONFIG -= app_bundle
 
 TEMPLATE = app
 
-SOURCES +=  tst_json_test.cpp \
+SOURCES +=  \
     ../Lab/Input.cpp \
-    ../Lab/Output.cpp
+    ../Lab/Output.cpp \
+    tst_serializer_test.cpp
+
+HEADERS += \
+        ../Lab/Input.hpp \
+        ../Lab/Output.hpp
