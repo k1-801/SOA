@@ -5,29 +5,6 @@
 #include <QString>
 #include <QObject>
 
-#define FOR_EACH_TYPE(TEMPLATE,F) \
-if(tn.startsWith(#TEMPLATE)) \
-{ \
-	F(TEMPLATE, bool) \
-	F(TEMPLATE, int) \
-	F(TEMPLATE, uint) \
-	F(TEMPLATE, qlonglong) \
-	F(TEMPLATE, qulonglong) \
-	F(TEMPLATE, double) \
-	F(TEMPLATE, long) \
-	F(TEMPLATE, short) \
-	F(TEMPLATE, char) \
-	F(TEMPLATE, ulong) \
-	F(TEMPLATE, ushort) \
-	F(TEMPLATE, uchar) \
-	F(TEMPLATE, float) \
-	F(TEMPLATE, signed char) \
-	F(TEMPLATE, std::nullptr_t) \
-	F(TEMPLATE, QCborSimpleType) \
-	F(TEMPLATE, QString) \
-	{} \
-}
-
 class Input : public QObject
 {
 		Q_OBJECT
@@ -38,7 +15,6 @@ class Input : public QObject
 		int _k;
 		QVector<double> _sums;
 		QVector<int> _muls;
-		static void fillFields(const QVariantMap& in, QObject*);
 
 	public:
 		Input(){}
@@ -52,8 +28,6 @@ class Input : public QObject
 
 		void fromXml(const QByteArray& in);
 		void fromJson(const QByteArray& in);
-		static void fromXml(const QByteArray& in, QObject*);
-		static void fromJson(const QByteArray& in, QObject*);
 };
 
 #endif // INPUT_HPP

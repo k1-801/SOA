@@ -19,7 +19,6 @@ class Output : public QObject
 		double _sumResult;
 		int _mulResult;
 		QVector<double> _sorted;
-		static QVariantMap retrieveFields(const QObject*);
 
 	public:
 		Output(){}
@@ -34,8 +33,6 @@ class Output : public QObject
 		void solve(const Input& i);
 		QByteArray toXml();
 		QByteArray toJson();
-		static QByteArray toXml(const QObject*);
-		static QByteArray toJson(const QObject*);
 };
 
 #endif // OUTPUT_HPP

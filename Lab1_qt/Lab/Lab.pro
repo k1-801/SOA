@@ -7,8 +7,10 @@ CONFIG -= app_bundle
 SOURCES += \
         Input.cpp \
         Output.cpp \
+        Serializer.cpp \
         main.cpp
 
 HEADERS += \
         Input.hpp \
-        Output.hpp
+        Output.hpp \
+        Serializer.hpp

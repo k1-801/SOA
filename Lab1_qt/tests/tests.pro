@@ -9,8 +9,10 @@ TEMPLATE = app
 SOURCES +=  \
     ../Lab/Input.cpp \
     ../Lab/Output.cpp \
+    ../Lab/Serializer.cpp \
     tst_serializer_test.cpp
 
 HEADERS += \
         ../Lab/Input.hpp \
-        ../Lab/Output.hpp
+        ../Lab/Output.hpp \
+        ../Lab/Serializer.hpp
